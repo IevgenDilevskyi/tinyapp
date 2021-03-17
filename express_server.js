@@ -28,6 +28,16 @@ const users = {
   }
 }
 
+const lookUp = function(email, object) {
+  for (let item in object) {
+    console.log(object[item].email)
+    if (object[item].email === email) {
+      return true
+    }
+  }
+  return false
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -36,7 +46,6 @@ app.get("/urls.json", (req, res) => {
 });
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };// user: users[req.cookies.user_id] - user from the table with current cookies.user_id
-  console.log("tVArs", templateVars)
   res.render("urls_index", templateVars);
 });
 app.get("/register", (req, res) => {
@@ -79,14 +88,16 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  users[id] = { id, email, password };
-  if (email === "" || password === ""){
-    res.status(400).send('Email and Password fields can\'t be empty')
+  console.log("usersTable", users)
+  if (email === "" || password === "") {// Checks if registration email or password fields are empty
+    res.status(400).send('Email and Password fields can\'t be empty.')
+  } else if (!lookUp(email, users)) {
+    users[id] = { id, email, password };
+    res.cookie("user_id", id);
+    res.redirect("/urls");
+  } else {
+  res.status(400).send('This email is already used. Choose another one.')
   }
-  res.cookie("user_id", id);
-  // console.log("users", users[id]);
-  console.log("email  ", email);
-  res.redirect("/urls");
 });
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies.user_id] };
