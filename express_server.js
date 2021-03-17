@@ -24,8 +24,11 @@ app.get("/urls.json", (req, res) => {
 });
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
-  console.log(req.cookies["username"])
   res.render("urls_index", templateVars);
+});
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.cookies["username"] };
+  res.render("register", templateVars);
 });
 app.get("/urls/new", (req, res) => {
   const templateVars = { username: req.cookies["username"] };
