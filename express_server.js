@@ -52,6 +52,10 @@ app.get("/register", (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
   res.render("register", templateVars);
 });
+app.get("/login", (req, res) => {
+  const templateVars = { user: users[req.cookies.user_id] };
+  res.render("login", templateVars);
+});
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
   const id = req.cookies.user_id;
@@ -91,7 +95,7 @@ app.post("/register", (req, res) => {
   console.log("usersTable", users)
   if (email === "" || password === "") {// Checks if registration email or password fields are empty
     res.status(400).send('Email and Password fields can\'t be empty.')
-  } else if (!lookUp(email, users)) {
+  } else if (!lookUp(email, users)) {// Checks if email already exists
     users[id] = { id, email, password };
     res.cookie("user_id", id);
     res.redirect("/urls");
