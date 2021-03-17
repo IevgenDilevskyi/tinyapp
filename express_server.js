@@ -80,9 +80,12 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   users[id] = { id, email, password };
+  if (email === "" || password === ""){
+    res.status(400).send('Email and Password fields can\'t be empty')
+  }
   res.cookie("user_id", id);
   // console.log("users", users[id]);
-  console.log("user  ", req.cookies.user_id);
+  console.log("email  ", email);
   res.redirect("/urls");
 });
 app.get("/urls/:shortURL", (req, res) => {
