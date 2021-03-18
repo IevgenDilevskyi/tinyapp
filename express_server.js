@@ -18,7 +18,8 @@ function generateRandomString(length=6){
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
+  fBioGr: { longURL: "https://www.google.com", userID: "123" }
 };
 
 const users = { 
@@ -38,6 +39,19 @@ const users = {
     password: "111"
   }
 }
+
+const urlsForUser = function(id) { // Returns only URLs that belong to certain user
+  let filteredURLs = {};
+  for (let url in urlDatabase) {
+    if (id === urlDatabase[url].userID) {
+      // console.log("is not equal")
+      filteredURLs[url] = urlDatabase[url];
+    }
+  }
+  return filteredURLs
+}
+
+// const filteredURLs = urlsForUser("testUser");
 
 const lookupEmail = function(email, object) {//Checks if user with this email already exists in "users" object
   for (let item in object) {
@@ -65,7 +79,9 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };// user: users[req.cookies.user_id] - user from the table with current cookies.user_id
+  const filteredURLs = urlsForUser(req.cookies.user_id);
+  const templateVars = { urls: filteredURLs, user: users[req.cookies.user_id] };// user: users[req.cookies.user_id] - user from the table with current cookies.user_id
+  // console.log("user", templateVars.user)
   res.render("urls_index", templateVars);
 });
 app.get("/register", (req, res) => {
@@ -94,12 +110,26 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls`);
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const id = req.cookies.user_id;
+  const shortUrl = req.params.shortURL;
+  console.log("shortURL.userID ", urlDatabase[shortUrl].userID);
+  if (id !== urlDatabase[shortUrl].userID) {// Checks if ID of the user who wants to delete url equals userID who created this url
+    res.status(403).send('You can\'t delete URLs of other users');
+  } else {
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
+  }
 });
 app.post("/urls/:id", (req, res) => {
+  const id = req.cookies.user_id;// Current user's ID
+  const shortUrl = req.params.id;// Id of user who crated URL in database
+  console.log("shortURL.userID ", urlDatabase[shortUrl].userID);
+  if (id !== urlDatabase[shortUrl].userID) {// Checks if ID of the user who wants to edit url equals userID who created this url
+    res.status(403).send('You can\'t edit URLs of other users');
+  } else {
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls`);
+  }
 });
 app.post("/login", (req, res) => {
   if (!lookupEmail(req.body.email, users)){// Checks if email exists in users database
@@ -131,7 +161,11 @@ app.post("/register", (req, res) => {
   }
 });
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies.user_id] };
+  const filteredURLs = urlsForUser(req.cookies.user_id);
+  console.log("FILTERED for /:shortURL", filteredURLs);
+  // console.log("FILTERED userID", filteredURLs[req.params.shortURL].userID);
+  // console.log("userID", urlDatabase[req.params.shortURL].userID, "current user", users[req.cookies.user_id].id);
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, userID: urlDatabase[req.params.shortURL].userID, user: users[req.cookies.user_id] };
   res.render("urls_show", templateVars);
 });
 app.get("/u/:shortURL", (req, res) => {
