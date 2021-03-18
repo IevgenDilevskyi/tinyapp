@@ -73,41 +73,34 @@ app.get("/login", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
   const id = req.cookies.user_id;
-  console.log(id);
   const test = { user: users[id] };
-  console.log("test", test);
   res.render("urls_new", templateVars);
 });
 app.post("/urls", (req, res) => {
-  console.log(req.body);
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
-  console.log(req.params.shortURL);
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
 app.post("/urls/:id", (req, res) => {
-  console.log(req.params.id);
   urlDatabase[req.params.id] = req.body.longURL;
   res.redirect(`/urls`);
 });
 app.post("/login", (req, res) => {
-  console.log("req.body", req.body);
-  if (!lookupEmail(req.body.email, users)){
+  if (!lookupEmail(req.body.email, users)){// Checks if email exists in users database
     res.status(403).send('User with this email doesn\'t exist in our database')
   }
   const existID = lookupEmail(req.body.email, users);
-  if (users[existID].password !== req.body.password){
+  if (users[existID].password !== req.body.password){// Checks if password mathces user's email
     res.status(403).send('Wrong password for this email')
   }
-  res.cookie("user_id",existID);
-  res.redirect(`/urls`);
+  res.cookie("user_id", existID);// If previous checks pass, set the cookie
+  res.redirect(`/urls`);//and redirect
 });
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
@@ -115,7 +108,6 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  console.log("usersTable", users)
   if (email === "" || password === "") {// Checks if registration email or password fields are empty
     res.status(400).send('Email and Password fields can\'t be empty.')
   } else if (!lookupEmail(email, users)) {// Checks if email already exists
