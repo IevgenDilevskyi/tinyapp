@@ -25,14 +25,28 @@ const users = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
+  },
+ "123": {
+    id: "123", 
+    email: "1@g", 
+    password: "111"
   }
 }
 
-const lookUp = function(email, object) {
+const lookupEmail = function(email, object) {//Checks if user with this email already exists in "users" object
   for (let item in object) {
     console.log(object[item].email)
     if (object[item].email === email) {
-      return true
+      return object[item].id
+    }
+  }
+  return false
+}
+const lookupPass = function(password, object) {//Checks if user with this password already exists in "users" object
+  for (let item in object) {
+    // console.log(object[item].password)
+    if (object[item].password === password) {
+      return object[item].id
     }
   }
   return false
@@ -81,7 +95,15 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls`);
 });
 app.post("/login", (req, res) => {
-  res.cookie("username",req.body.username);
+  console.log("req.body", req.body);
+  if (!lookupEmail(req.body.email, users)){
+    res.status(403).send('User with this email doesn\'t exist in our database')
+  }
+  const existID = lookupEmail(req.body.email, users);
+  if (users[existID].password !== req.body.password){
+    res.status(403).send('Wrong password for this email')
+  }
+  res.cookie("user_id",existID);
   res.redirect(`/urls`);
 });
 app.post("/logout", (req, res) => {
@@ -96,7 +118,7 @@ app.post("/register", (req, res) => {
   console.log("usersTable", users)
   if (email === "" || password === "") {// Checks if registration email or password fields are empty
     res.status(400).send('Email and Password fields can\'t be empty.')
-  } else if (!lookUp(email, users)) {// Checks if email already exists
+  } else if (!lookupEmail(email, users)) {// Checks if email already exists
     users[id] = { id, email, password };
     res.cookie("user_id", id);
     res.redirect("/urls");
