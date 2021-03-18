@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require('cookie-parser')
+const bcrypt = require('bcrypt');
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set("view engine", "ejs");
 
@@ -36,7 +37,12 @@ const users = {
  "123": {
     id: "123", 
     email: "1@g", 
-    password: "111"
+    password: "$2b$10$JMaDpbHXrIMc.tiEidEgTu1z2p7ihzGFU2bmxTvgHD/RouLhLZX96"
+  },
+  "321": {
+    id: "321", 
+    email: "22@f", 
+    password: "$2b$10$xjFp.kmBRqgajOrjKdLOY.H0w8wusXmsUBAA7X3G87g39nmWJs5ye"
   }
 }
 
@@ -96,8 +102,6 @@ app.get("/login", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
   const id = req.cookies.user_id;
-  console.log("ID", id);
-  // const test = { user: users[id] };
   if (id) {
     return res.render("urls_new", templateVars);
   }
@@ -106,13 +110,11 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.cookies.user_id};
-  // console.log("URLdatabase", urlDatabase);
   res.redirect(`/urls`);
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
   const id = req.cookies.user_id;
   const shortUrl = req.params.shortURL;
-  console.log("shortURL.userID ", urlDatabase[shortUrl].userID);
   if (id !== urlDatabase[shortUrl].userID) {// Checks if ID of the user who wants to delete url equals userID who created this url
     res.status(403).send('You can\'t delete URLs of other users');
   } else {
@@ -123,7 +125,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const id = req.cookies.user_id;// Current user's ID
   const shortUrl = req.params.id;// Id of user who crated URL in database
-  console.log("shortURL.userID ", urlDatabase[shortUrl].userID);
   if (id !== urlDatabase[shortUrl].userID) {// Checks if ID of the user who wants to edit url equals userID who created this url
     res.status(403).send('You can\'t edit URLs of other users');
   } else {
@@ -136,11 +137,14 @@ app.post("/login", (req, res) => {
     res.status(403).send('User with this email doesn\'t exist in our database')
   }
   const existID = lookupEmail(req.body.email, users);
-  if (users[existID].password !== req.body.password){// Checks if password mathces user's email
-    res.status(403).send('Wrong password for this email')
-  }
+  console.log("COMPARE PASSWORDS ", bcrypt.compareSync(req.body.password, users[existID].password))
+  // if (users[existID].password !== req.body.password){// Checks if password mathces user's email
+  if (!bcrypt.compareSync(req.body.password, users[existID].password)){
+    res.status(403).send('Email and Password do not match')
+  } 
   res.cookie("user_id", existID);// If previous checks pass, set the cookie
   res.redirect(`/urls`);//and redirect
+  
 });
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
@@ -149,13 +153,14 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);// Hashed password is saved
   if (email === "" || password === "") {// Checks if registration email or password fields are empty
     res.status(400).send('Email and Password fields can\'t be empty.')
   } else if (!lookupEmail(email, users)) {// Checks if email already exists
     users[id] = { id, email, password };
     res.cookie("user_id", id);
     res.redirect("/urls");
+    console.log(users);
   } else {
   res.status(400).send('This email is already used. Choose another one.')
   }
