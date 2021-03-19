@@ -9,7 +9,7 @@
 <body>
   <%- include('partials/_header') %>
   <% if(!user) { %>
-    <h5 class="card-title">Please Login first </h5>
+    <h2 class="card-title">Please Login or Register first </h2>
     <a class="nav-item nav-link" href="/login">LOGIN</a>
     <a class="nav-item nav-link" href="/register">REGISTER</a>
   <% } else if (user.id === userID) { %>  
@@ -31,7 +31,7 @@
     <div class="card-footer text-muted"></div>
   </div>
    <% } else { %> 
-    <h5 class="card-title">URL you're looking for doesn't belong to you. You can't see it </h5>
+    <h3 class="card-title">URL you're looking for doesn't belong to you. You can't access it </h3>
     <a class="nav-item nav-link" href="/login">LOGIN</a>
     <a class="nav-item nav-link" href="/register">REGISTER</a>
     <% } %>
