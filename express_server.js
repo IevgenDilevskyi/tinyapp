@@ -57,6 +57,16 @@ const urlsForUser = function(id) { // Returns object with only those URLs that b
   return filteredURLs;
 };
 
+app.get("/", (req, res) => {
+  // res.send("Hello!");
+  const id = req.session.user_id;
+  if (id) {
+    res.redirect('/urls');
+    return
+  }
+  res.redirect('/login');
+});
+
 app.get("/urls", (req, res) => {
   const id = req.session.user_id;
   const filteredURLs = urlsForUser(id);// URLs that belong to current user
@@ -139,8 +149,10 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
-  const password = bcrypt.hashSync(req.body.password, 10);// Hashing the password
-  if (email === "" || password === "") {                  // Checks if registration email or password fields are empty
+  const plainTextPassword = req.body.password;
+  const password = bcrypt.hashSync(plainTextPassword, 10);// Hashing the password
+  
+  if (email === "" || plainTextPassword === "") {                  // Checks if registration email or password fields are empty
     res.status(400).send('Email and Password fields can\'t be empty.');
   } else if (!getUserByEmail(email, users)) {             // Checks if email already exists
     users[id] = { id, email, password };
