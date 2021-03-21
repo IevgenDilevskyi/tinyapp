@@ -17,13 +17,13 @@ const generateRandomString = function(length = 6) {             // Generates ran
   return Math.random().toString(20).substr(2, length);
 };
 
-const urlDatabase = {// URL Database
+const urlDatabase = {                                           // URL Database
   b6UTxQ: { longURL: "www.tsn.ca", userID: "aJ48lW" },
   i3BoGr: { longURL: "www.google.ca", userID: "aJ48lW" },
   fBioGr: { longURL: "www.google.com", userID: "123" }
 };
 
-const users = {// Users Database
+const users = {                                                 // Users Database
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -46,11 +46,10 @@ const users = {// Users Database
   }
 };
 
-const urlsForUser = function(id) { // Returns object with only those URLs that belong to certain user
+const urlsForUser = function(id) {        // Returns object with only those URLs that belong to certain user
   let filteredURLs = {};
   for (let url in urlDatabase) {
     if (id === urlDatabase[url].userID) {
-      // console.log("is not equal")
       filteredURLs[url] = urlDatabase[url];
     }
   }
@@ -58,7 +57,6 @@ const urlsForUser = function(id) { // Returns object with only those URLs that b
 };
 
 app.get("/", (req, res) => {
-  // res.send("Hello!");
   const id = req.session.user_id;
   if (id) {
     res.redirect('/urls');
@@ -69,20 +67,23 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const id = req.session.user_id;
-  const filteredURLs = urlsForUser(id);// URLs that belong to current user
+  const filteredURLs = urlsForUser(id);                         // URLs that belong to current user
   const templateVars = { urls: filteredURLs, user: users[id] };
   res.render("urls_index", templateVars);
 });
+
 app.get("/register", (req, res) => {
   const id = req.session.user_id;
   const templateVars = { user: users[id] };
   res.render("register", templateVars);
 });
+
 app.get("/login", (req, res) => {
   const id = req.session.user_id;
   const templateVars = { user: users[id] };
   res.render("login", templateVars);
 });
+
 app.get("/urls/new", (req, res) => {
   const id = req.session.user_id;
   const templateVars = { user: users[id] };
@@ -91,6 +92,7 @@ app.get("/urls/new", (req, res) => {
   }
   res.redirect('/login');
 });
+
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
@@ -98,17 +100,20 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL, longURL, userID, user: users[req.session.user_id] };
   res.render("urls_show", templateVars);
 });
+
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = `https://${urlDatabase[shortURL].longURL}`;
   res.redirect(longURL);
 });
+
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   const id = req.session.user_id;
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: id};
   res.redirect(`/urls/${shortURL}`);
 });
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   const id = req.session.user_id;
   const shortUrl = req.params.shortURL;
@@ -119,6 +124,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.redirect(`/urls`);
   }
 });
+
 app.post("/urls/:id", (req, res) => {
   const id = req.session.user_id;           // Current user's ID
   const shortUrl = req.params.id;           // Short URL that user wants to edit
@@ -129,23 +135,26 @@ app.post("/urls/:id", (req, res) => {
     res.redirect(`/urls`);
   }
 });
+
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const existUser = getUserByEmail(email, users);
-  const existID = existUser.id;
   if (!existUser) {                                // Checks if email exists in users database
-    res.status(403).send('Wrong user\'s email');
+    return res.status(403).send('Wrong user\'s email');
   }
+  const existID = existUser.id;
   if (!bcrypt.compareSync(req.body.password, users[existID].password)) { // Compares passwords
     return res.status(403).send('Email and Password do not match');
   }
   req.session.user_id = existID;
   res.redirect(`/urls`);
 });
+
 app.post("/logout", (req, res) => {
   req.session = null;                    //Clears the cookies
   res.redirect("/urls");
 });
+
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
@@ -153,7 +162,7 @@ app.post("/register", (req, res) => {
   const password = bcrypt.hashSync(plainTextPassword, 10);// Hashing the password
   
   if (email === "" || plainTextPassword === "") {                  // Checks if registration email or password fields are empty
-    res.status(400).send('Email and Password fields can\'t be empty.');
+    return res.status(400).send('Email and Password fields can\'t be empty.');
   } else if (!getUserByEmail(email, users)) {             // Checks if email already exists
     users[id] = { id, email, password };
     req.session.user_id = id;
